@@ -1,0 +1,14 @@
+"""
+Creates LSTM model structure
+Implemented by: Eman Essam
+"""
+
+
+def generate_lstm_model(num_steps, dictionary_size, hidden_size):
+    """
+    Generate LSTM model based on the specs entailed in show and tell paper
+    :param num_steps: number of words input to the LSTM / number of LSTM units
+    :param dictionary_size: total vocabulary size
+    :param hidden_size: hidden weights size
+    """
+    # TODO: LSTM model by Eman Essam
