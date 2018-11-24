@@ -1,14 +1,21 @@
-"""
-Creates LSTM model structure
-Implemented by: Eman Essam
-"""
 
+from keras.layers import Dense, Activation, Embedding, Dropout, TimeDistributed,LSTM, Concatenate
+from keras.models import Sequential, load_model
+from keras.optimizers import Adam
+from keras.utils import to_categorical
+import keras as ks
 
-def generate_lstm_model(num_steps, dictionary_size, hidden_size):
-    """
-    Generate LSTM model based on the specs entailed in show and tell paper
-    :param num_steps: number of words input to the LSTM / number of LSTM units
-    :param dictionary_size: total vocabulary size
-    :param hidden_size: hidden weights size
-    """
-    # TODO: LSTM model by Eman Essam
+class LstmModel(load_model):
+    # bulid strruct of lstm model when define object from LSTM MODEL
+    def __init__(self, embed_size, vocab_size, num_layers, max_seq_length, hidden_size=512):
+        """Set the hyper-parameters and build the  structure of layers."""
+        #max seq length >> num steps
+        super(LstmModel, self).__init__()
+        self.model = Sequential()
+        self.embed = self.model.add(Embedding(vocab_size, embed_size, input_length=max_seq_length))
+        self.lstm = self.model.add(LSTM(embed_size, hidden_size, num_layers, batch_first=True))
+        self.dense = self.model.add(TimeDistributed(Dense(hidden_size, vocab_size)))
+        self.max_seg_length = max_seq_length
+        self.active = self.model.add(Activation('softmax'))
+        optimizer = Adam()
+        self.model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['categorical_accuracy'])
