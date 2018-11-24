@@ -47,7 +47,7 @@ def image_generator(batch_size, input_shape):
         id = ant['image_id']
         name = 'val2014/COCO_val2014_%012d.jpg' % id
         name_box_id.append(name)
-
+    #write pathes on file
     f = open('train.txt', 'w')
     for key in name_box_id:
         f.write(key)
