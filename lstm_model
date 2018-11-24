@@ -1,21 +1,49 @@
 
-from keras.layers import Dense, Activation, Embedding, Dropout, TimeDistributed,LSTM, Concatenate
-from keras.models import Sequential, load_model
-from keras.optimizers import Adam
-from keras.utils import to_categorical
-import keras as ks
+from keras.layers import Dense, Embedding, LSTM, Concatenate
+from keras.models import Model
 
-class LstmModel(load_model):
-    # bulid strruct of lstm model when define object from LSTM MODEL
-    def __init__(self, embed_size, vocab_size, num_layers, max_seq_length, hidden_size=512):
-        """Set the hyper-parameters and build the  structure of layers."""
-        #max seq length >> num steps
-        super(LstmModel, self).__init__()
-        self.model = Sequential()
-        self.embed = self.model.add(Embedding(vocab_size, embed_size, input_length=max_seq_length))
-        self.lstm = self.model.add(LSTM(embed_size, hidden_size, num_layers, batch_first=True))
-        self.dense = self.model.add(TimeDistributed(Dense(hidden_size, vocab_size)))
-        self.max_seg_length = max_seq_length
-        self.active = self.model.add(Activation('softmax'))
-        optimizer = Adam()
-        self.model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['categorical_accuracy'])
+def LstmModel(out_cnn, length_layer, input_caption, dictionary_size, max_seq_length, hidden_size=512):
+    out_cnn = out_cnn(shape=(length_layer,), dtype='int32')
+
+    dense_cnn = Dense(hidden_size)(out_cnn)
+
+    input_caption = input_caption(shape=(max_seq_length,), dtype='int32')
+
+    embed_caption = Embedding(output_dim=hidden_size, input_dim=dictionary_size, input_length=max_seq_length)(input_caption)
+
+    conncat_layer = Concatenate([dense_cnn,embed_caption])
+
+    lstm_out = LSTM(max_seq_length)(conncat_layer) #take lstm units = num of word in seq(lengtth of seq)
+
+    output = Dense(dictionary_size, activation='softmax')(lstm_out)
+
+    model = Model(inputs=[out_cnn, input_caption], outputs=[output])
+
+    model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['categorical_accuracy'])
+
+    return model
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
