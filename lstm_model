@@ -1,19 +1,21 @@
-
-from keras.layers import Dense, Embedding, LSTM, Concatenate
+from keras.layers import Dense, Embedding, LSTM, Concatenate, Input
 from keras.models import Model
 
-def LstmModel(out_cnn, length_layer, input_caption, dictionary_size, max_seq_length, hidden_size=512):
+
+def lstm_model(out_cnn, length_layer, input_caption, dictionary_size, max_seq_length, hidden_size=512):
+
     out_cnn = out_cnn(shape=(length_layer,), dtype='int32')
 
-    dense_cnn = Dense(hidden_size)(out_cnn)
+    feature_cnn = Dense(hidden_size)(out_cnn)
 
     input_caption = input_caption(shape=(max_seq_length,), dtype='int32')
 
-    embed_caption = Embedding(output_dim=hidden_size, input_dim=dictionary_size, input_length=max_seq_length)(input_caption)
+    embed_caption = Embedding(output_dim=hidden_size, input_dim=dictionary_size, input_length=max_seq_length)(
+        input_caption)
 
-    conncat_layer = Concatenate([dense_cnn,embed_caption])
+    conncat_layer = Concatenate(axis=2)([feature_cnn, embed_caption])
 
-    lstm_out = LSTM(max_seq_length)(conncat_layer) #take lstm units = num of word in seq(lengtth of seq)
+    lstm_out = LSTM(max_seq_length)(conncat_layer)  # take lstm units = num of word in seq(lengtth of seq)
 
     output = Dense(dictionary_size, activation='softmax')(lstm_out)
 
@@ -22,28 +24,4 @@ def LstmModel(out_cnn, length_layer, input_caption, dictionary_size, max_seq_len
     model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['categorical_accuracy'])
 
     return model
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
