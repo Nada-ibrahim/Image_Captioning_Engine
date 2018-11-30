@@ -25,37 +25,23 @@ def get_random_data(annotation_line, input_shape, proc_img=True):
         image = image.resize((nw,nh), Image.BICUBIC)
         new_image = Image.new('RGB', (w,h), (128,128,128))
         new_image.paste(image, (dx, dy))
-        image_data = np.array(new_image)/255.
+        image_data = np.array(new_image)
+        image_data = np.expand_dims(image_data, axis=0)
+        image_data = preprocess_input(image_data)
     return image_data
 
-def image_generator(batch_size, input_shape):
+def image_generator(batch_size, input_shape,File_path):
     """
     Generate image batches to feed to CNN
     :param batch_size: size of the batch
     :param input_shape: size of the image
+    :param File_path:'validation.txt' or 'test.txt' image path files
     :return batches of shape (batch_size, input_shape)
     """
     # TODO: image generator by Aya Ayman
-    name_box_id = []
-    f = open(
-        "annotations/captions_val2014.json",
-        encoding='utf-8')
-    data = json.load(f)
-    print("file is opened")
-    annotations = data['annotations']
-    for ant in annotations:
-        id = ant['image_id']
-        name = 'val2014/COCO_val2014_%012d.jpg' % id
-        name_box_id.append(name)
-    #write pathes on file
-    f = open('train.txt', 'w')
-    for key in name_box_id:
-        f.write(key)
-        f.write('\n')
-    f.close()
 
     '''data generator for fit_generator'''
-    annotation_path='train.txt'
+    annotation_path=File_path
     with open(annotation_path) as f:
         annotation_lines = f.readlines()
 
