@@ -14,10 +14,10 @@ def file_write():
     annotations = data['annotations']
     for ant in annotations:
         id = ant['image_id']
-        name = 'val2014/COCO_val2014_%012d.jpg' % id
+        name = 'val2014/val2014/COCO_val2014_%012d.jpg' % id
         name_box_id.append(name)
 
-    f = open('validation.txt', 'w')
+    f = open('paths/validation.txt', 'w')
     for key in name_box_id:
         f.write(key)
         f.write('\n')
@@ -34,11 +34,13 @@ def file_write():
     annotations = data['annotations']
     for ant in annotations:
         id = ant['image_id']
-        name = 'train2014/COCO_train2014_%012d.jpg' % id
+        name = 'train2014/train2014/COCO_train2014_%012d.jpg' % id
         train_name_box_id.append(name)
 
-    file = open('train.txt', 'w')
+    file = open('paths/train.txt', 'w')
     for key in train_name_box_id:
         file.write(key)
         file.write('\n')
     file.close()
+
+file_write()
