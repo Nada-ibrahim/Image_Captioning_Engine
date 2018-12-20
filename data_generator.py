@@ -25,20 +25,23 @@ def generate(batch_size, dictionary_size, num_steps, image_size, images_path, an
         annotations = f.readlines()
 
     # initialize outputs
-    x_word = np.zeros((batch_size, num_steps))
-    # x_feature = np.zeros((batch_size, image_size))
-    y = np.zeros((batch_size, num_steps+1, dictionary_size))
+
 
     img_gen = image_generator(batch_size, image_size, images_path)
     current_idx = 0
     while True:
         image_data = next(img_gen)
+        max_len = 0
+        x_word = np.zeros((batch_size, num_steps))
+        y = np.zeros((batch_size, num_steps + 1, dictionary_size))
         for i in range(batch_size):
             if current_idx >= len(annotations):
                 # reset the index back to the start of the data set
                 current_idx = 0
             ## process inputs
             caption_words = [int(n) for n in annotations[current_idx].split()]
+            if len(caption_words) > max_len:
+                max_len =len(caption_words)
             x_word[i, :len(caption_words)] = caption_words
             # pad with <end> tag
             x_word[i, len(caption_words):] = x_word[i, len(caption_words) - 1]
@@ -49,5 +52,6 @@ def generate(batch_size, dictionary_size, num_steps, image_size, images_path, an
             y[i, :, :] = to_categorical(temp_y, num_classes=dictionary_size)
 
             current_idx += 1
-
-        yield [image_data, x_word], y
+        x_word_crop = x_word[:, :max_len]
+        y_crop = y[:,:max_len+1,:]
+        yield [image_data, x_word_crop], y_crop

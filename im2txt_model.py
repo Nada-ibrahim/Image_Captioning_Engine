@@ -1,4 +1,5 @@
-from keras.layers import Dense, Embedding, LSTM, concatenate, Input, Flatten, Lambda, TimeDistributed
+from keras.layers import Dense, Embedding, LSTM, concatenate, Input, Lambda, TimeDistributed, AveragePooling2D, \
+    Reshape
 from keras.models import Model
 from cnn_model import create_nas_model
 from keras.backend import expand_dims
@@ -11,11 +12,11 @@ def create_model(dictionary_size, max_seq_length, hidden_size=512, stateful = Fa
         input_cnn = Input(shape=(224, 224, 3), dtype='float32')
 
     nas_model = create_nas_model()
+    nas_model.trainable = False
 
     feature_cnn = nas_model(input_cnn)
-
-    feature_flat = Flatten()(feature_cnn)
-
+    avg_bool = AveragePooling2D(pool_size=(int(feature_cnn.shape[1]), int(feature_cnn.shape[2])))(feature_cnn)
+    feature_flat = Reshape((-1,))(avg_bool)
     embed_features = Dense(hidden_size, activation='relu')(feature_flat)
 
     if stateful:
@@ -36,7 +37,6 @@ def create_model(dictionary_size, max_seq_length, hidden_size=512, stateful = Fa
 
     output = TimeDistributed(Dense(dictionary_size, activation='softmax'))(lstm_out)
 
-    # output = Lambda(lambda x: TimeDistributed(Dense(dictionary_size, activation='softmax')(x)))(lstm_out)
     model = Model(inputs=[input_cnn, input_caption], outputs=[output])
 
     model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['categorical_accuracy'])
