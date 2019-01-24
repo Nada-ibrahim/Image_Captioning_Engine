@@ -1,13 +1,13 @@
 from keras.layers import Dense, Embedding, LSTM, concatenate, Input, Lambda, TimeDistributed, AveragePooling2D, \
-    Reshape
+    Reshape, Dropout
 from keras.models import Model
 from cnn_model import create_nas_model
 from keras.backend import expand_dims
 
 
-def create_model(dictionary_size, max_seq_length, hidden_size=512, stateful = False):
+def create_model(dictionary_size, max_seq_length, hidden_size=512, stateful=False):
     if stateful:
-        input_cnn = Input(batch_shape=(1,224, 224, 3), dtype='float32')
+        input_cnn = Input(batch_shape=(1, 224, 224, 3), dtype='float32')
     else:
         input_cnn = Input(shape=(224, 224, 3), dtype='float32')
 
@@ -20,7 +20,7 @@ def create_model(dictionary_size, max_seq_length, hidden_size=512, stateful = Fa
     embed_features = Dense(hidden_size, activation='relu')(feature_flat)
 
     if stateful:
-        input_caption = Input(batch_shape=(1,None), dtype='int32')
+        input_caption = Input(batch_shape=(1, None), dtype='int32')
 
     else:
         input_caption = Input(shape=(None,), dtype='int32')
@@ -32,8 +32,7 @@ def create_model(dictionary_size, max_seq_length, hidden_size=512, stateful = Fa
 
     conncat_layer = concatenate([expanded_features, embed_caption], axis=1)
 
-    lstm_out = LSTM(hidden_size, return_sequences=True, stateful=stateful)(
-        conncat_layer)
+    lstm_out = LSTM(hidden_size, return_sequences=True, stateful=stateful)(conncat_layer)
 
     output = TimeDistributed(Dense(dictionary_size, activation='softmax'))(lstm_out)
 
