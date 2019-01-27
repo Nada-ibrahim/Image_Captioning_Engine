@@ -2,7 +2,9 @@
 Create CNN model that outputs the features in the last layer before classification
 Implemented by: Shrouk Mansour
 """
+import keras
 from keras_applications.nasnet import NASNetLarge, NASNetMobile, preprocess_input
+from keras.utils import plot_model
 
 
 def create_nas_model():
@@ -15,5 +17,7 @@ def create_nas_model():
         nas_model.layers[i].trainable = False
 
     input_shape = (224, 224)
-
+    plot_model(nas_model, 'nas_net_model.png')
     return nas_model
+
+create_nas_model()
