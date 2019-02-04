@@ -4,7 +4,7 @@ from pathlib import Path
 from keras.backend import expand_dims
 # from keras.engine.saving import model_from_json
 from keras.models import model_from_json
-from im2txt_model import create_model
+from im2txt_model import create_training_model
 from word_dictionary import create_dictionaries, encode_annotations
 from keras.callbacks import ModelCheckpoint, ReduceLROnPlateau, EarlyStopping, TensorBoard, LearningRateScheduler
 from data_generator import generate
@@ -23,7 +23,7 @@ def step_decay(epoch):
 
 
 def create_save_model(model_path):
-    model = create_model(dictionary_size, max_seq_length, hidden_size)
+    model = create_training_model(dictionary_size, hidden_size)
 
     model_json = model.to_json()
     with open(model_path, "w") as json_file:
@@ -103,5 +103,4 @@ model.fit_generator(generate(batch_size, dictionary_size, max_seq_length, image_
                     , validation_steps=max(1, num_val // batch_size))
 
 model.save(log_dir + 'trained_model.h5')
-print(model.summary())
-model.reset_states()
+
