@@ -1,3 +1,4 @@
+import timeit
 from math import log
 
 import numpy as np
@@ -6,7 +7,8 @@ from keras.backend import expand_dims
 
 from keras.engine.saving import load_model, model_from_json
 
-from image_generator import preprocess_image
+from im2txt_model import create_training_model
+from predictor import Predictor
 from word_dictionary import create_dictionaries
 
 dictionary, reversedDictionary = create_dictionaries()
@@ -14,62 +16,81 @@ image_size = (224, 224)
 log_dir = "logs2/"
 
 
-def search_beam(model_structure_path, model_weights_path, image, k=3):
-    json_file = open(model_structure_path, 'r')
-    loaded_model_json = json_file.read()
-    json_file.close()
-    model = model_from_json(loaded_model_json, custom_objects={"expand_dims": expand_dims})
-    model.load_weights(model_weights_path)
-    image = np.expand_dims(preprocess_image(image, image_size, proc_img=True),axis=0)
+def get_best_k(all_candidates, k):
+    MAX = float("inf")
+    best_k = list()
+    firstmin = [list(), MAX]
+    secmin = [list(), MAX]
+    thirdmin = [list(), MAX]
+    for i in range(0, len(all_candidates)):
+        if all_candidates[i][1] < firstmin[1]:
+            thirdmin = secmin;
+            secmin = firstmin;
+            firstmin = all_candidates[i]
+        elif all_candidates[i][1] < secmin[1]:
+            thirdmin = secmin;
+            secmin = all_candidates[i]
+        elif all_candidates[i][1] < thirdmin[1]:
+            thirdmin = all_candidates[i]
+    best_k.append([firstmin, secmin, thirdmin])
+    return best_k[0]
+
+
+def search_beam(predictor, image, k=3):
+    states = predictor.feed_image(image)
     st = dictionary["<start>"]
-    words = np.array([st])
-    words_input = np.expand_dims(words, axis=0)
-    # words = np.append(words, st)
-    sequences = [[list(), 1.0, False]]
-    for i in range(1, 50):
+    sequences = [[[st], 1.0, states]] * 3
+    completed_sequences = []
+    max_length = 15
+    for i in range(1, max_length):
         all_candidates = list()
+        words_input = np.array([sequences[j][0][-1] for j in range(len(sequences))]).reshape(3, 1)
+        states = [np.array([sequences[j][2][0] for j in range(len(sequences))]),
+                  np.array([sequences[j][2][1] for j in range(len(sequences))])]
+        batch_res, batch_states = predictor.predict(words_input, states)
         for j in range(len(sequences)):
-            seq, score, is_completed = sequences[j]
-            if not is_completed:
-                words_input = np.expand_dims(np.append(np.array([st]), seq), axis=0)
-                res = model.predict([image, words_input])
-                row = res[:, i, :][0]
-                for m in range(1, row.size):
-                    if row[m] == 0:
-                        candidate = [seq + [m], float("inf"), False]
-                    else:
-                        candidate = [seq + [m], score * -log(row[m]), False]
-                    all_candidates.append(candidate)
-            else:
-                candidate = [seq, 0, is_completed]
-                all_candidates.append(candidate)
-        ordered = sorted(all_candidates, key=lambda tup: tup[1])  # order all candidates by score
-        sequences = ordered[:k]  # select k best
-        completed = []
-        for n in range(len(sequences)):
-            if sequences[n][0][len(sequences[n][0])-1] == 1:
-                sequences[n][2] = True
-            completed.append(sequences[n][2])
-        if all(completed):
-            break
-    return sequences
+            seq, score, _ = sequences[j]
+            res = batch_res[j]
+            states = [batch_states[0][j], batch_states[1][j]]
+            row = res[0, :]
+            row = list(enumerate(row))
+            row.sort(key=lambda x: -x[1])
+            row = row[0:k]
+            for w, p in row:
+                if w != 2:
+                    if p >= 1e-4:
+                        if w == 1:
+                            candidate = [seq, score * -log(p), states]
+                            completed_sequences.append(candidate)
+                        else:
+                            candidate = [seq + [w], score * -log(p), states]
+                            all_candidates.append(candidate)
+            if i == 1:
+                break
+        sequences = get_best_k(all_candidates, k)  # select k best
+        completed_sequences = get_best_k(completed_sequences, k)  # select k best
+    return completed_sequences
 
 
-def get_best_caption(model_structure_path, model_weights_path, image, k=3):
-    sequences = search_beam(model_structure_path, model_weights_path, image)
+def get_best_caption(model, image, k=3):
+    sequences = search_beam(model, image)
     sequences = sorted(sequences, key=lambda tup: tup[1])
-    best_cap= ""
+    best_cap = ""
     for i in range(len(sequences)):
         seq = sequences[i]
         predicted_seq = ""
-        for j in range(len(seq[0])):
+        for j in range(1, len(seq[0])):
             predicted_seq += (reversedDictionary[seq[0][j]] + " ")
-        print(predicted_seq)
+        print(predicted_seq + " " + str(seq[1]))
         if i == 0:
             best_cap = predicted_seq
     return best_cap
 
 
-image = Image.open("COCO_test2014_000000003853.jpg")
-model_weights_path = log_dir + "nep031-acc0.681-val_acc0.650.h5 "
-get_best_caption("model_structure.json", model_weights_path, image)
+image = Image.open("1280px-Abbey_Road_Zebra_crossing_2004-01.jpg")
+model_weights_path = log_dir + "nep031-acc0.681-val_acc0.650.h5"
+predictor = Predictor(model_weights_path, beam_size=3)
+get_best_caption(predictor, image)
+
+t = timeit.Timer(lambda: get_best_caption(predictor, image))
+print(t.timeit(number=1))

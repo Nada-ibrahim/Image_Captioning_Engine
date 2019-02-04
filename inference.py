@@ -16,6 +16,7 @@ log_dir = "logs2/"
 
 os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
 
+
 def infer(model_structure_path, model_weights_path, image):
     json_file = open(model_structure_path, 'r')
     loaded_model_json = json_file.read()
@@ -43,5 +44,5 @@ def infer(model_structure_path, model_weights_path, image):
 
 
 image = Image.open("1280px-Abbey_Road_Zebra_crossing_2004-01.jpg")
-model_weights_path = log_dir + "nep031-acc0.681-val_acc0.650.h5 "
+model_weights_path = log_dir + "nep031-acc0.681-val_acc0.650.h5"
 infer("model_structure.json", model_weights_path, image)
