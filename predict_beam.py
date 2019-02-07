@@ -75,22 +75,18 @@ def search_beam(predictor, image, k=3):
 def get_best_caption(model, image, k=3):
     sequences = search_beam(model, image)
     sequences = sorted(sequences, key=lambda tup: tup[1])
-    best_cap = ""
-    for i in range(len(sequences)):
-        seq = sequences[i]
-        predicted_seq = ""
-        for j in range(1, len(seq[0])):
-            predicted_seq += (reversedDictionary[seq[0][j]] + " ")
-        print(predicted_seq + " " + str(seq[1]))
-        if i == 0:
-            best_cap = predicted_seq
+    seq = sequences[0]
+    predicted_seq = ""
+    for j in range(1, len(seq[0])):
+        predicted_seq += (reversedDictionary[seq[0][j]] + " ")
+    best_cap = predicted_seq
     return best_cap
 
 
-image = Image.open("1280px-Abbey_Road_Zebra_crossing_2004-01.jpg")
-model_weights_path = log_dir + "nep031-acc0.681-val_acc0.650.h5"
-predictor = Predictor(model_weights_path, beam_size=3)
-get_best_caption(predictor, image)
+#image = Image.open("1280px-Abbey_Road_Zebra_crossing_2004-01.jpg")
+#model_weights_path = log_dir + "nep031-acc0.681-val_acc0.650.h5"
+#predictor = Predictor(model_weights_path, beam_size=3)
+#get_best_caption(predictor, image)
 
-t = timeit.Timer(lambda: get_best_caption(predictor, image))
-print(t.timeit(number=1))
+#t = timeit.Timer(lambda: get_best_caption(predictor, image))
+#print(t.timeit(number=1))

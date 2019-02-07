@@ -2,6 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
+      <module fileurl="file://$PROJECT_DIR$/.idea/Gproject.iml" filepath="$PROJECT_DIR$/.idea/Gproject.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/Scene_Description_Show_and_Tell.iml" filepath="$PROJECT_DIR$/.idea/Scene_Description_Show_and_Tell.iml" />
     </modules>
   </component>
